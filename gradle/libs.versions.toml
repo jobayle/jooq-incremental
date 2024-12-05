@@ -1,0 +1,23 @@
+[versions]
+
+kotlin = "1.9.25"
+postgresql = "42.7.4"
+jooq = "3.19.15"
+test-containers = "1.20.4"
+liquibase = "4.30.0"
+
+[libraries]
+postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+jooq-core = { module = "org.jooq:jooq", version.ref = "jooq" }
+jooq-kotlin = { module = "org.jooq:jooq-kotlin", version.ref = "jooq" }
+jooq-jackson = { module = "org.jooq:jooq-jackson-extensions", version.ref = "jooq" }
+jooq-meta = { module = "org.jooq:jooq-meta-extensions", version.ref = "jooq" }
+testContainers-core = { module = "org.testcontainers:testcontainers", version.ref = "test-containers" }
+testContainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "test-containers" }
+liquibase-core = { module = "org.liquibase:liquibase-core", version.ref = "liquibase" }
+liquibase-picoli = { module = "info.picocli:picocli", version.require = "4.7.5" } # FIXME Should be transitively included instead
+
+[plugins]
+
+jooq = { id = "org.jooq.jooq-codegen-gradle", version.ref = "jooq" }
+liquibase = { id = "org.liquibase.gradle", version.require = "2.2.1" }

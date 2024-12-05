@@ -1,0 +1,16 @@
+{
+  "databaseChangeLog": [
+    {
+      "include": {
+        "file": "changelog/init.sql",
+        "relativeToChangelogFile": true
+      }
+    },
+    {
+      "include": {
+        "file": "changelog/extension.sql",
+        "relativeToChangelogFile": true
+      }
+    }
+  ]
+}
