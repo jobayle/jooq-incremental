@@ -1,4 +1,3 @@
-import org.jetbrains.kotlin.gradle.plugin.extraProperties
 import org.jooq.codegen.gradle.CodegenTask
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.jdbc.JdbcDatabaseDelegate
@@ -106,8 +105,8 @@ val configureTestContainers = tasks.register("configureTestContainers", DefaultT
         argumentsDb02["url"] = url + "db02"
 
         // Configure JOOQ
-        tasks.named("jooqCodegenDb01").get().extraProperties["ext.url"] = url + "db01"
-        tasks.named("jooqCodegenDb02").get().extraProperties["ext.url"] = url + "db02"
+        project.jooq.executions.named("db01").get().configuration.jdbc.url = url + "db01"
+        project.jooq.executions.named("db02").get().configuration.jdbc.url = url + "db02"
     }
 }
 
@@ -127,14 +126,6 @@ tasks.withType<CodegenTask>().configureEach {
 
     onlyIf("input has changed") {
         !configureTestContainers.get().state.upToDate
-    }
-
-    doFirst {
-        if (extraProperties.has("ext.url")) {
-            val jdbcUrl = extraProperties["ext.url"] as String
-            println("setting system property `jooq.codegen.jdbc.url` to $jdbcUrl")
-            System.setProperty("jooq.codegen.jdbc.url", jdbcUrl)
-        }
     }
 }
 
