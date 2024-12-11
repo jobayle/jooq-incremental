@@ -20,4 +20,4 @@ liquibase-picoli = { module = "info.picocli:picocli", version.require = "4.7.5" 
 [plugins]
 
 jooq = { id = "org.jooq.jooq-codegen-gradle", version.ref = "jooq" }
-liquibase = { id = "org.liquibase.gradle", version.require = "2.2.1" }
+liquibase = { id = "org.liquibase.gradle", version.require = "3.0.1" }

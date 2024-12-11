@@ -46,6 +46,7 @@ buildscript {
         classpath(libs.testContainers.core)
         classpath(libs.testContainers.postgresql)
         classpath(libs.postgresql)
+        classpath(libs.liquibase.core)
     }
 }
 
@@ -81,10 +82,15 @@ val containerProvider = project.gradle.sharedServices
         parameters.getPassword().set(dbPassword)
     }
 
-tasks.register("configureTestContainers", DefaultTask::class) {
+val configureTestContainers = tasks.register("configureTestContainers", DefaultTask::class) {
     group = "build"
     description = "Configure Liquibase & JOOQ to run on Test Containers"
     usesService(containerProvider)
+
+    // Caching, UP-TO-DATE if input (liquibase changelog) hasn't changed, no output
+    inputs.files(fileTree("src/main/resources/liquibase"))
+    outputs.upToDateWhen { true }
+
     @Suppress("UNCHECKED_CAST")
     doFirst {
         var url = containerProvider.get().instance.jdbcUrl
@@ -105,8 +111,21 @@ tasks.register("configureTestContainers", DefaultTask::class) {
     }
 }
 
+tasks.update.configure {
+    mustRunAfter(configureTestContainers)
+    onlyIf("invoking `update` directly or input has changed") {
+        // invoking `update`
+        !db01Url.isNullOrBlank() || !db02Url.isNullOrBlank()
+        // input has changed
+            || !configureTestContainers.get().state.upToDate
+    }
+}
+
 tasks.withType<CodegenTask>().configureEach {
     inputs.files(fileTree("src/main/resources/liquibase"))
+
+    dependsOn(configureTestContainers, tasks.update)
+    mustRunAfter(configureTestContainers, tasks.update)
 
     doFirst {
         if (extraProperties.has("ext.url")) {
@@ -125,7 +144,8 @@ liquibase {
                 "username" to dbUsername,
                 "password" to dbPassword,
                 "url" to db01Url,
-                "driver" to "org.postgresql.Driver"
+                "driver" to "org.postgresql.Driver",
+                "outputFile" to layout.buildDirectory.file("tmp/liquibase/db01").get().asFile.absolutePath,
             )
         }
         register("db02") {
@@ -134,7 +154,8 @@ liquibase {
                 "username" to dbUsername,
                 "password" to dbPassword,
                 "url" to db02Url,
-                "driver" to "org.postgresql.Driver"
+                "driver" to "org.postgresql.Driver",
+                "outputFile" to layout.buildDirectory.file("tmp/liquibase/db02").get().asFile.absolutePath,
             )
         }
     }
@@ -189,11 +210,6 @@ jooq {
             }
         }
     }
-}
-
-tasks.jooqCodegen {
-    dependsOn(tasks.update, tasks.named("configureTestContainers"))
-    mustRunAfter(tasks.update, tasks.named("configureTestContainers"))
 }
 
 tasks.compileKotlin {
