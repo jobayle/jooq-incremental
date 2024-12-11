@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.plugin.extraProperties
 import org.jooq.codegen.gradle.CodegenTask
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.jdbc.JdbcDatabaseDelegate
@@ -99,15 +100,21 @@ tasks.register("configureTestContainers", DefaultTask::class) {
         argumentsDb02["url"] = url + "db02"
 
         // Configure JOOQ
-        project.jooq.executions.named("db01").get().configuration.jdbc.url = url + "db01"
-        project.jooq.executions.named("db02").get().configuration.jdbc.url = url + "db02"
+        tasks.named("jooqCodegenDb01").get().extraProperties["ext.url"] = url + "db01"
+        tasks.named("jooqCodegenDb02").get().extraProperties["ext.url"] = url + "db02"
     }
 }
 
 tasks.withType<CodegenTask>().configureEach {
-    // Rerun only if liquibase changesets are modified (not working... why?)
-    // It seems something cleans dir build/generated-sources/jooq ...
     inputs.files(fileTree("src/main/resources/liquibase"))
+
+    doFirst {
+        if (extraProperties.has("ext.url")) {
+            val jdbcUrl = extraProperties["ext.url"] as String
+            println("setting system property `jooq.codegen.jdbc.url` to $jdbcUrl")
+            System.setProperty("jooq.codegen.jdbc.url", jdbcUrl)
+        }
+    }
 }
 
 liquibase {
@@ -140,7 +147,6 @@ jooq {
                 jdbc {
                     username = dbUsername
                     password = dbPassword
-                    url = "lateinit"
                 }
                 generator {
                     name = "org.jooq.codegen.KotlinGenerator"
@@ -164,7 +170,6 @@ jooq {
                 jdbc {
                     username = dbUsername
                     password = dbPassword
-                    url = "lateinit"
                 }
                 generator {
                     name = "org.jooq.codegen.KotlinGenerator"
