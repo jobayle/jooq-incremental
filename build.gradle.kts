@@ -122,10 +122,12 @@ tasks.update.configure {
 }
 
 tasks.withType<CodegenTask>().configureEach {
-    inputs.files(fileTree("src/main/resources/liquibase"))
-
     dependsOn(configureTestContainers, tasks.update)
     mustRunAfter(configureTestContainers, tasks.update)
+
+    onlyIf("input has changed") {
+        !configureTestContainers.get().state.upToDate
+    }
 
     doFirst {
         if (extraProperties.has("ext.url")) {
